@@ -38,7 +38,7 @@ services:
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=55 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
-    ports:
+    ports: !override
       - "127.0.0.1:8080:8080"
     mem_limit: 720m
     depends_on: !override
