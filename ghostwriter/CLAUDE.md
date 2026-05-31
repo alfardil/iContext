@@ -51,5 +51,5 @@ Telegram webhook → [task topic] → AgentService (Gemini) → [reply topic] �
 - DB models use `@NotNullColumn` / `@NullColumn` source-retention annotations to document nullability at a glance — they have no runtime effect.
 - Repository layer uses Spring `JdbcClient` directly (no ORM). IDs are `UUID.randomUUID()` generated in Java before insert; `createdAt` is returned via `RETURNING`.
 - All repository implementations follow the pattern: interface in `repos/<entity>/`, SQL impl in the same package.
-- Kafka is hosted on [Aiven](https://console.aiven.io/account/a5aea1a676cb/project/ghostwriter/services/ghostwriter-kafka/overview) and uses mTLS (`ca.pem`, `svc.pem`); SSL config is in `application.yaml`.
+- Kafka runs as a local plaintext broker (the `kafka` service in the root `docker-compose.yml`, reached via `${KAFKA_SERVER}`); there is no SSL/mTLS config. In the `prod` profile Kafka is dropped entirely — the webhook is handled inline (`MessageIntake` → `InlineMessageIntake`). See `DEPLOYMENT.md`.
 - Environment variables are loaded from `.env` via Spring's `optional:file:.env[.properties]` import.
