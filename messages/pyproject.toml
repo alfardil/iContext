@@ -1,0 +1,40 @@
+[project]
+name = "imsg"
+version = "0.1.0"
+description = "Strongly-typed iMessage chat.db reader with full attributedBody decoding"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.10",
+    "pytypedstream>=0.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5"]
+mcp = [
+    "fastmcp>=2.0",
+    "sentence-transformers>=3.0",
+    "sqlite-vec>=0.1.6",
+    "numpy>=1.26",
+]
+# Mac-side cloud publisher (DEPLOYMENT.md). Needs the `mcp` extra too, for the embedding model.
+push = ["psycopg[binary]>=3.1"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["imsg*", "imsg_mcp*"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+# Third-party packages that ship no type stubs / py.typed marker.
+[[tool.mypy.overrides]]
+module = ["typedstream", "typedstream.*", "sqlite_vec", "sqlite_vec.*", "psycopg", "psycopg.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"

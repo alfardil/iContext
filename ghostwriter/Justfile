@@ -1,0 +1,16 @@
+set shell := ["bash", "-uc"]
+
+# Migrate local DB
+migrate *args:
+    dotenvx run -- ./mvnw flyway:migrate -Dflyway.locations=filesystem:src/main/resources/db/migration {{ args }}
+
+# Drop local DB
+drop *args:
+    dotenvx run -- ./mvnw flyway:clean -Dflyway.locations=filesystem:src/main/resources/db/migration -Dflyway.cleanDisabled=false {{ args }}
+
+# Run ghostwriter natively (assumes Postgres + Kafka + imsg_mcp already up)
+dev *args:
+    mvn spring-boot:run
+
+test *args:
+    ./mvnw test

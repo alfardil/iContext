@@ -1,0 +1,13 @@
+set shell := ["bash", "-uc"]
+
+# start the iMessage MCP server
+serve:
+    uv run imsg_mcp/server.py --transport streamable-http --host 127.0.0.1 --port 5050
+
+# push message embeddings to the cloud pgvector (prod publisher; needs GHOSTWRITER_PG_DSN)
+push *ARGS:
+    .venv/bin/python -m imsg_mcp.push {{ARGS}}
+
+# run tests
+test:
+    source .venv/bin/activate && uv run pytest && python3 -m mypy imsg

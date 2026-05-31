@@ -1,0 +1,8 @@
+.env
+.git/
+target/
+ca.pem
+svc.pem
+*.iml
+.idea/
+.vscode/

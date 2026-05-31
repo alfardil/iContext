@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  java-tests:
+    name: ghostwriter (Java)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ghostwriter
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: ghostwriter
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Apply Flyway migrations to test DB
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: ghostwriter
+          DATABASE_USER: postgres
+          DATABASE_PASSWORD: postgres
+        run: mvn flyway:migrate -Dflyway.locations=filesystem:src/main/resources/db/migration
+
+      - name: Run tests
+        run: mvn clean verify
+
+  python-tests:
+    name: imsg (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: messages
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install (core + dev only — `mcp` extra pulls torch and is host-only)
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check imsg tests
+
+      - name: Type-check
+        run: mypy imsg
+
+      - name: Test
+        run: pytest -q
+
+  flyway-migrate:
+    name: Flyway migrate (prod)
+    needs: java-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ghostwriter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Apply Flyway migrations
+        env:
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: mvn flyway:migrate -Dflyway.locations=filesystem:src/main/resources/db/migration

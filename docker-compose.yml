@@ -1,0 +1,74 @@
+name: icontext
+
+# Two services here run on the host, not in this compose:
+#   - imsg_mcp  — reads ~/Library/Messages/chat.db, which needs macOS Full Disk Access
+#                 (Docker Desktop can't grant it even with a bind mount).
+#                 Run it with:  cd messages && just serve
+#   - Postgres  — in dev, ghostwriter talks to the Postgres already running on your Mac
+#                 (via host.docker.internal), so there's no DB container and no volume.
+#                 That host Postgres MUST have the pgvector extension installed — Flyway's
+#                 V2 migration runs `CREATE EXTENSION vector`. (e.g. Postgres.app, or
+#                 `brew install pgvector` against a Homebrew postgresql, then it's available
+#                 to `CREATE EXTENSION`.) See DEPLOYMENT.md for the prod story.
+
+services:
+  kafka:
+    image: apache/kafka:4.0.2
+    ports:
+      - "9094:9094"
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 0
+      KAFKA_PROCESS_ROLES: controller,broker
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  ghostwriter:
+    build:
+      context: ./ghostwriter
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: host.docker.internal
+      KAFKA_SERVER: kafka:9092
+      IMSG_MCP_URL: http://host.docker.internal:5050
+    ports:
+      - "8080:8080"
+    depends_on:
+      kafka:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: http --domain=${NGROK_DOMAIN} ghostwriter:8080
+    ports:
+      - "4040:4040"
+    depends_on:
+      - ghostwriter
+    profiles:
+      - public
+
+volumes:
+  kafka-data:

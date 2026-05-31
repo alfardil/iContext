@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd job: push iMessage embeddings to the cloud pgvector every ~10 minutes.
+
+  StartInterval fires only while the Mac is awake — there's no "cron on a sleeping Mac"
+  problem, which is exactly the behavior DEPLOYMENT.md wants (push when awake, ghostwriter
+  serves stale rows when asleep).
+
+  Install:
+    1. Edit the two paths below to your checkout, and put your DSN in GHOSTWRITER_PG_DSN
+       (the cloud box's Tailscale IP, e.g. postgresql://postgres:pw@100.x.y.z:5432/ghostwriter).
+    2. cp messages/scripts/com.icontext.imsg-push.plist ~/Library/LaunchAgents/
+    3. launchctl load ~/Library/LaunchAgents/com.icontext.imsg-push.plist
+
+  Full Disk Access: the interpreter at ProgramArguments[0] needs FDA to read chat.db
+  (System Settings → Privacy & Security → Full Disk Access). Same requirement as `just serve`.
+
+  Logs: tail -f /tmp/imsg-push.log
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.icontext.imsg-push</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/alfardilalam/icontext/messages/.venv/bin/python</string>
+    <string>-m</string>
+    <string>imsg_mcp.push</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/alfardilalam/icontext/messages</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>GHOSTWRITER_PG_DSN</key>
+    <string>postgresql://postgres:postgres@100.0.0.0:5432/ghostwriter</string>
+  </dict>
+
+  <key>StartInterval</key>
+  <integer>600</integer>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/imsg-push.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/imsg-push.log</string>
+</dict>
+</plist>

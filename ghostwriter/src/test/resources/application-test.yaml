@@ -1,0 +1,16 @@
+spring:
+  flyway:
+    enabled: true
+    locations: filesystem:./db/migration
+    clean-disabled: false
+
+# Env-var fallbacks for when .env is absent (e.g., CI).
+# Locally, .env wins for these.
+DATABASE_HOST: localhost
+DATABASE_PORT: 5432
+DATABASE_NAME: ghostwriter
+DATABASE_USER: postgres
+DATABASE_PASSWORD: postgres
+GEMINI_API_KEY: test-key
+TELEGRAM_BOT_TOKEN: test-token
+KAFKA_SERVER: localhost:9092
