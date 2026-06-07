@@ -7,8 +7,11 @@
   serves stale rows when asleep).
 
   Install:
-    1. Edit the two paths below to your checkout, and put your DSN in GHOSTWRITER_PG_DSN
-       (the cloud box's Tailscale IP, e.g. postgresql://postgres:pw@100.x.y.z:5432/ghostwriter).
+    1. Edit the two paths below to your checkout, and put your DSN in GHOSTWRITER_PG_DSN.
+       On Railway, copy the Postgres service's DATABASE_PUBLIC_URL (the public TCP proxy), e.g.
+       postgresql://postgres:pw@HOST.proxy.rlwy.net:PORT/railway?sslmode=require
+       On a self-hosted VPS, use the box's Tailscale IP, e.g.
+       postgresql://postgres:pw@100.x.y.z:5432/ghostwriter
     2. cp messages/scripts/com.icontext.imsg-push.plist ~/Library/LaunchAgents/
     3. launchctl load ~/Library/LaunchAgents/com.icontext.imsg-push.plist
 
@@ -35,7 +38,7 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>GHOSTWRITER_PG_DSN</key>
-    <string>postgresql://postgres:postgres@100.0.0.0:5432/ghostwriter</string>
+    <string>postgresql://postgres:postgres@HOST.proxy.rlwy.net:PORT/railway?sslmode=require</string>
   </dict>
 
   <key>StartInterval</key>

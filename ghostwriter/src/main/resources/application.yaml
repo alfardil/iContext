@@ -47,10 +47,11 @@ app:
   telegram:
     bot-token: ${TELEGRAM_BOT_TOKEN}
   cache:
-    # Cosine similarity; below this is a miss. MiniLM-L6 typically scores 0.6–0.8 for
-    # "same intent, different wording" pairs, so 0.85 was way too strict. 0.65 catches
-    # paraphrases without crossing into unrelated questions (which sit ~0.3–0.5).
-    similarity-threshold: 0.65
+    # Cosine similarity; below this is a miss. Measured on MiniLM-L6: a genuine paraphrase
+    # of the same question scores ~0.95+, but two *different* questions that share a template
+    # ("when did I talk with Maheen about X") sit ~0.70, and unrelated questions ~0.0. 0.65
+    # let template-twins false-hit each other; 0.90 admits real repeats while rejecting them.
+    similarity-threshold: 0.90
     ttl: 1h
 
 management:

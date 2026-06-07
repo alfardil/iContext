@@ -20,7 +20,7 @@ public class QuestionCacheService {
   public QuestionCacheService(
     final EmbeddingModel embeddingModel,
     final QuestionCacheRepository repo,
-    @Value("${app.cache.similarity-threshold:0.85}") final double similarityThreshold,
+    @Value("${app.cache.similarity-threshold:0.90}") final double similarityThreshold,
     @Value("${app.cache.ttl:1h}") final Duration ttl
   ) {
     this.embeddingModel = embeddingModel;

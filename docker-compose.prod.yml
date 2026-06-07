@@ -1,4 +1,4 @@
-# Prod override for the 1 GB box. See DEPLOYMENT.md.
+# Prod override (Hetzner CX22, 4 GB). See DEPLOYMENT.md.
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:
@@ -13,19 +13,11 @@ services:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-    command:
-      - "postgres"
-      - "-c"
-      - "shared_buffers=128MB"
-      - "-c"
-      - "max_connections=40"
-      - "-c"
-      - "effective_cache_size=256MB"
     ports:
       - "${POSTGRES_BIND}:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    mem_limit: 256m
+    mem_limit: 512m
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
       interval: 10s
@@ -37,10 +29,10 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=55 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=65"
     ports: !override
       - "127.0.0.1:8080:8080"
-    mem_limit: 720m
+    mem_limit: 2g
     depends_on: !override
       postgres:
         condition: service_healthy
